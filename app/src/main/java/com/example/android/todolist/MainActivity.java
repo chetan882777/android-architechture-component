@@ -18,6 +18,8 @@ package com.example.android.todolist;
 
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.Observer;
+import android.arch.lifecycle.ViewModelProvider;
+import android.arch.lifecycle.ViewModelProviders;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -116,12 +118,10 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.ItemC
     }
 
     private void retrieveTasks() {
-        Log.d(TAG, "Actively retrieving the tasks from the DataBase");
-        // COMPLETED (4) Extract all this logic outside the Executor and remove the Executor
-        // COMPLETED (3) Fix compile issue by wrapping the return type with LiveData
-        LiveData<List<TaskEntry>> tasks = mDb.taskDao().loadAllTasks();
+        MainViewModel viewModel = ViewModelProviders.of(this).get(MainViewModel.class);
+
         // COMPLETED (5) Observe tasks and move the logic from runOnUiThread to onChanged
-        tasks.observe(this, new Observer<List<TaskEntry>>() {
+        viewModel.getTasks().observe(this, new Observer<List<TaskEntry>>() {
             @Override
             public void onChanged(@Nullable List<TaskEntry> taskEntries) {
                 Log.d(TAG, "Receiving database update from LiveData");
