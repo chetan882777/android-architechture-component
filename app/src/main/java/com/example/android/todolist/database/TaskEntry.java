@@ -6,7 +6,7 @@ import android.arch.persistence.room.PrimaryKey;
 
 import java.util.Date;
 
-@Entity(tableName = "task")
+@Entity(tableName = "Task")
 public class TaskEntry {
 
     @PrimaryKey(autoGenerate = true)
