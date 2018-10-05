@@ -37,7 +37,7 @@ public class AppExecutors {
     public Executor networkIO(){
         return networkIO;
     }
-    public Executor mainThread(){}
+    public Executor mainThread(){return mainThread;}
 
     public Executor getMainThread() {
         return mainThread;
