@@ -1,18 +1,24 @@
 package com.example.android.todolist.database;
 
+import android.arch.persistence.room.ColumnInfo;
 import android.arch.persistence.room.Entity;
 import android.arch.persistence.room.Ignore;
 import android.arch.persistence.room.PrimaryKey;
+import android.arch.persistence.room.TypeConverter;
+import android.arch.persistence.room.TypeConverters;
 
 import java.util.Date;
 
 @Entity(tableName = "Task")
+@TypeConverters(DateConverter.class)
 public class TaskEntry {
 
     @PrimaryKey(autoGenerate = true)
     private int id;
     private String description;
     private int priority;
+
+    @ColumnInfo(name = "updated_at")
     private Date updatedAt;
 
     @Ignore
