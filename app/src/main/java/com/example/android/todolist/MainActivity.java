@@ -1,29 +1,33 @@
 /*
-* Copyright (C) 2016 The Android Open Source Project
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*      http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+ * Copyright (C) 2016 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package com.example.android.todolist;
 
+import android.arch.lifecycle.LiveData;
+import android.arch.lifecycle.Observer;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.helper.ItemTouchHelper;
+import android.util.Log;
 import android.view.View;
 
 import com.example.android.todolist.database.AppDatabase;
@@ -41,6 +45,7 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.ItemC
     // Member variables for the adapter and RecyclerView
     private RecyclerView mRecyclerView;
     private TaskAdapter mAdapter;
+
     private AppDatabase mDb;
 
     @Override
@@ -81,8 +86,9 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.ItemC
                     @Override
                     public void run() {
                         int position = viewHolder.getAdapterPosition();
-                        mDb.taskDao().deleteTask(mAdapter.getTaskEntries().get(position));
-                        retrieveTask();
+                        List<TaskEntry> tasks = mAdapter.getTaskEntries();
+                        mDb.taskDao().deleteTask(tasks.get(position));
+                        // COMPLETED (6) Remove the call to retrieveTasks
                     }
                 });
             }
@@ -103,36 +109,32 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.ItemC
                 startActivity(addTaskIntent);
             }
         });
-        mDb = AppDatabase.getInstance(this);
+
+        mDb = AppDatabase.getInstance(getApplicationContext());
+        // COMPLETED (7) Call retrieveTasks from here and remove the onResume method
+        retrieveTasks();
+    }
+
+    private void retrieveTasks() {
+        Log.d(TAG, "Actively retrieving the tasks from the DataBase");
+        // COMPLETED (4) Extract all this logic outside the Executor and remove the Executor
+        // COMPLETED (3) Fix compile issue by wrapping the return type with LiveData
+        LiveData<List<TaskEntry>> tasks = mDb.taskDao().loadAllTasks();
+        // COMPLETED (5) Observe tasks and move the logic from runOnUiThread to onChanged
+        tasks.observe(this, new Observer<List<TaskEntry>>() {
+            @Override
+            public void onChanged(@Nullable List<TaskEntry> taskEntries) {
+                Log.d(TAG, "Receiving database update from LiveData");
+                mAdapter.setTasks(taskEntries);
+            }
+        });
     }
 
     @Override
     public void onItemClickListener(int itemId) {
         // Launch AddTaskActivity adding the itemId as an extra in the intent
-        Intent intent = new Intent(this , AddTaskActivity.class);
-        intent.putExtra(AddTaskActivity.EXTRA_TASK_ID , itemId);
+        Intent intent = new Intent(MainActivity.this, AddTaskActivity.class);
+        intent.putExtra(AddTaskActivity.EXTRA_TASK_ID, itemId);
         startActivity(intent);
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        retrieveTask();
-    }
-
-    private void retrieveTask() {
-        AppExecutors.getInstance().diskIO().execute(new Runnable() {
-            @Override
-            public void run() {
-                final List<TaskEntry> tasks = AppDatabase.getInstance(MainActivity.this).taskDao().loadAllTasks();
-
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        mAdapter.setTasks(tasks);
-                    }
-                });
-            }
-        });
     }
 }
