@@ -16,9 +16,7 @@
 
 package com.example.android.todolist;
 
-import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.Observer;
-import android.arch.lifecycle.ViewModelProvider;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.Intent;
 import android.os.Bundle;
@@ -90,7 +88,6 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.ItemC
                         int position = viewHolder.getAdapterPosition();
                         List<TaskEntry> tasks = mAdapter.getTaskEntries();
                         mDb.taskDao().deleteTask(tasks.get(position));
-                        // COMPLETED (6) Remove the call to retrieveTasks
                     }
                 });
             }
@@ -113,18 +110,19 @@ public class MainActivity extends AppCompatActivity implements TaskAdapter.ItemC
         });
 
         mDb = AppDatabase.getInstance(getApplicationContext());
-        // COMPLETED (7) Call retrieveTasks from here and remove the onResume method
-        retrieveTasks();
+        setupViewModel();
     }
 
-    private void retrieveTasks() {
+    // COMPLETED (8) This method is not retrieving the tasks any more. Refactor to a more suitable name such as setupViewModel
+    private void setupViewModel() {
+        // COMPLETED (5) Remove the logging and the call to loadAllTasks, this is done in the ViewModel now
+        // COMPLETED (6) Declare a ViewModel variable and initialize it by calling ViewModelProviders.of
         MainViewModel viewModel = ViewModelProviders.of(this).get(MainViewModel.class);
-
-        // COMPLETED (5) Observe tasks and move the logic from runOnUiThread to onChanged
+        // COMPLETED (7) Observe the LiveData object in the ViewModel
         viewModel.getTasks().observe(this, new Observer<List<TaskEntry>>() {
             @Override
             public void onChanged(@Nullable List<TaskEntry> taskEntries) {
-                Log.d(TAG, "Receiving database update from LiveData");
+                Log.d(TAG, "Updating list of tasks from LiveData in ViewModel");
                 mAdapter.setTasks(taskEntries);
             }
         });
